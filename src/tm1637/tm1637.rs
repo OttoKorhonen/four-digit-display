@@ -4,7 +4,6 @@ use crate::tm1637::{
 };
 use esp_hal::delay::Delay;
 use esp_hal::gpio::OutputOpenDrain;
-
 use heapless::Vec;
 
 pub struct Tm1637<'a> {
@@ -23,13 +22,23 @@ impl<'a> Tm1637<'a> {
     }
 
     fn start_input(&mut self) {
+        self.dio.set_high();
         self.scl.set_high();
+        self.delay.delay_micros(3);
+
         self.dio.set_low();
+        self.delay.delay_micros(3);
+        self.scl.set_low();
     }
 
     fn end_input(&mut self) {
-        self.dio.set_high();
+        self.scl.set_low();
+        self.dio.set_low();
+        self.delay.delay_micros(3);
+
         self.scl.set_high();
+        self.delay.delay_micros(3);
+        self.dio.set_high();
     }
 
     pub fn write_byte(&mut self, byte: u8) -> bool {
@@ -43,18 +52,18 @@ impl<'a> Tm1637<'a> {
 
             // Kello-pulssi
             self.scl.set_high();
-            self.delay.delay_micros(10);
+            self.delay.delay_micros(3);
             self.scl.set_low();
-            self.delay.delay_micros(10);
+            self.delay.delay_micros(3);
         }
 
         self.scl.set_high();
-        self.delay.delay_micros(10);
+        self.delay.delay_micros(3);
 
         let ack = self.dio.is_low(); // TM1637 vetää linjan alas, jos ACK annetaan
 
         self.scl.set_low();
-        self.delay.delay_micros(10);
+        self.delay.delay_micros(3);
 
         ack
     }
@@ -63,15 +72,13 @@ impl<'a> Tm1637<'a> {
         self.start_input();
 
         self.write_command_to_register(DisplaySwitch::On);
-        self.delay.delay_micros(10);
+        self.delay.delay_micros(3);
 
         self.write_command_to_register(AddressMode::Automatic);
-        self.delay.delay_micros(10);
+        self.delay.delay_micros(3);
 
         self.write_command_to_register(DataCommand::WriteDataToDisplayRegister);
-        self.delay.delay_micros(10);
-
-
+        self.delay.delay_micros(3);
 
         for bit in bit_vec {
             self.write_byte(*bit);
@@ -91,7 +98,6 @@ impl<'a> Tm1637<'a> {
     }
 
     fn match_segment(&mut self, num: u8) -> u8 {
-
         match num {
             0 => 0x3F,
             1 => 0x06,
@@ -107,6 +113,7 @@ impl<'a> Tm1637<'a> {
         }
     }
 
+    /// write to the display. Max 4 digits
     pub fn write(&mut self, message: u16) {
         let digits = [
             (message / 1000) % 10,
@@ -115,12 +122,13 @@ impl<'a> Tm1637<'a> {
             message % 10,
         ];
 
-        let mut bit_vec: Vec<u8, 8> = Vec::new();
+        let mut bit_vec: Vec<u8, 4> = Vec::new();
 
         for &digit in &digits {
             let bit = self.match_segment(digit as u8);
             bit_vec.push(bit).unwrap();
         }
+
         self.write_value_to_register(&bit_vec);
     }
 
