@@ -24,21 +24,49 @@ impl<'a> Tm1637<'a> {
     fn start_input(&mut self) {
         self.dio.set_high();
         self.scl.set_high();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
 
         self.dio.set_low();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
         self.scl.set_low();
     }
 
     fn end_input(&mut self) {
         self.scl.set_low();
         self.dio.set_low();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
 
         self.scl.set_high();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
         self.dio.set_high();
+    }
+
+    pub fn test(&mut self) {
+        self.start_input();
+        self.write_command_to_register(
+            DataCommand::WriteDataToDisplayRegister
+        );
+
+        self.write_command_to_register(AddressMode::Fixed);
+
+        
+        //self.write_command_to_register(Address::C1H);
+        let num = self.digit_to_segment(0);
+        self.write_byte(num); // 0
+        self.delay.delay_micros(5);
+        //self.write_command_to_register(Address::C4H);
+        let num = self.digit_to_segment(9);
+        self.write_byte(num); // 0
+        self.delay.delay_micros(5);
+        //self.write_command_to_register(Address::C3H);
+        let num = self.digit_to_segment(7);
+        self.write_byte(num); // 0
+        self.delay.delay_micros(5);
+        //self.write_command_to_register(Address::C2H);
+        let num = self.digit_to_segment(3);
+        self.write_byte(num); // 0
+
+        self.end_input();
     }
 
     pub fn write_byte(&mut self, byte: u8) -> bool {
@@ -52,33 +80,25 @@ impl<'a> Tm1637<'a> {
 
             // Kello-pulssi
             self.scl.set_high();
-            self.delay.delay_micros(3);
+            self.delay.delay_micros(5);
             self.scl.set_low();
-            self.delay.delay_micros(3);
+            self.delay.delay_micros(5);
         }
 
         self.scl.set_high();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
 
         let ack = self.dio.is_low(); // TM1637 vetää linjan alas, jos ACK annetaan
 
         self.scl.set_low();
-        self.delay.delay_micros(3);
+        self.delay.delay_micros(5);
 
         ack
     }
 
     pub fn write_value_to_register(&mut self, bit_vec: &[u8]) {
+
         self.start_input();
-
-        self.write_command_to_register(DisplaySwitch::On);
-        self.delay.delay_micros(3);
-
-        self.write_command_to_register(AddressMode::Automatic);
-        self.delay.delay_micros(3);
-
-        self.write_command_to_register(DataCommand::WriteDataToDisplayRegister);
-        self.delay.delay_micros(3);
 
         for bit in bit_vec {
             self.write_byte(*bit);
@@ -97,7 +117,7 @@ impl<'a> Tm1637<'a> {
         self.write_byte(bit);
     }
 
-    fn match_segment(&mut self, num: u8) -> u8 {
+    fn digit_to_segment(&mut self, num: u8) -> u8 {
         match num {
             0 => 0x3F,
             1 => 0x06,
@@ -113,6 +133,15 @@ impl<'a> Tm1637<'a> {
         }
     }
 
+    pub fn init(&mut self) {
+        self.write_command_to_register(DisplaySwitch::On);
+        self.delay.delay_micros(5);
+        self.write_command_to_register(AddressMode::Automatic);
+        self.delay.delay_micros(5);
+        self.write_command_to_register(DataCommand::WriteDataToDisplayRegister);
+        self.delay.delay_micros(5);
+    }
+
     /// write to the display. Max 4 digits
     pub fn write(&mut self, message: u16) {
         let digits = [
@@ -121,15 +150,17 @@ impl<'a> Tm1637<'a> {
             (message / 10) % 10,
             message % 10,
         ];
-
+        
+        // self.delay.delay_micros(5);
         let mut bit_vec: Vec<u8, 4> = Vec::new();
 
         for &digit in &digits {
-            let bit = self.match_segment(digit as u8);
+            let bit = self.digit_to_segment(digit as u8);
             bit_vec.push(bit).unwrap();
         }
 
         self.write_value_to_register(&bit_vec);
+        self.write_command_to_register(DisplaySwitch::Off);
     }
 
     fn command_to_u8<T>(&mut self, command: T) -> u8
