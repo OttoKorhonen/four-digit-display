@@ -41,35 +41,7 @@ impl<'a> Tm1637<'a> {
         self.dio.set_high();
     }
 
-    pub fn test(&mut self) {
-        self.start_input();
-        self.write_command_to_register(
-            DataCommand::WriteDataToDisplayRegister
-        );
-
-        self.write_command_to_register(AddressMode::Fixed);
-
-        
-        //self.write_command_to_register(Address::C1H);
-        let num = self.digit_to_segment(0);
-        self.write_byte(num); // 0
-        self.delay.delay_micros(5);
-        //self.write_command_to_register(Address::C4H);
-        let num = self.digit_to_segment(9);
-        self.write_byte(num); // 0
-        self.delay.delay_micros(5);
-        //self.write_command_to_register(Address::C3H);
-        let num = self.digit_to_segment(7);
-        self.write_byte(num); // 0
-        self.delay.delay_micros(5);
-        //self.write_command_to_register(Address::C2H);
-        let num = self.digit_to_segment(3);
-        self.write_byte(num); // 0
-
-        self.end_input();
-    }
-
-    pub fn write_byte(&mut self, byte: u8) -> bool {
+    fn write_byte(&mut self, byte: u8) -> bool {
         for i in 0..8 {
             // Asetetaan DIO bittiarvon mukaan
             if (byte >> i) & 1 == 1 {
@@ -96,8 +68,7 @@ impl<'a> Tm1637<'a> {
         ack
     }
 
-    pub fn write_value_to_register(&mut self, bit_vec: &[u8]) {
-
+    fn write_value_to_register(&mut self, bit_vec: &[u8]) {
         self.start_input();
 
         for bit in bit_vec {
@@ -150,8 +121,7 @@ impl<'a> Tm1637<'a> {
             (message / 10) % 10,
             message % 10,
         ];
-        
-        // self.delay.delay_micros(5);
+
         let mut bit_vec: Vec<u8, 4> = Vec::new();
 
         for &digit in &digits {
