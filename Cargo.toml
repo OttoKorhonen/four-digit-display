@@ -3,32 +3,47 @@ name = "tm1637"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-esp-backtrace = { version = "0.14.2", features = [
-    "esp32c3",
-    "exception-handler",
-    "panic-handler",
-    "println",
-]}
+[lib]
+name = "tm1637"
+path = "src/lib.rs"
 
+[dependencies]
+embedded-hal = "1.0.0"
 heapless = "0.8.0"
-esp-hal = { version = "0.22.0", features = [
-    "esp32c3",
-] }
 esp-println = { version = "0.12.0", features = ["esp32c3", "log"] }
-log = { version = "0.4.21" }
+log = "0.4.21"
 critical-section = "1.2.0"
 
+esp-hal = { version = "0.22.0", optional = true }     
+
+esp-backtrace = { version = "0.14.2", features = ["esp32c3", "exception-handler", "panic-handler", "println"] }
+
+rp-hal = { version = "0.0.2", optional = true }        
+rppal = { version = "0.14", optional = true }
+
+[features]
+default = ["esp32c3"]
+# ESP32
+esp32 = ["esp-hal/esp32", "esp-backtrace/esp32", "esp-println/esp32"]
+esp32s2 = ["esp-hal/esp32s2", "esp-backtrace/esp32s2", "esp-println/esp32s2"]
+esp32s3 = ["esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3"]
+esp32c3 = ["esp-hal/esp32c3", "esp-backtrace/esp32c3", "esp-println/esp32c3"]
+
+# Raspberry Pi Pico
+rp-pico = ["rp-hal"]
+# Raspberry Pi 4/5 Linux GPIO
+rp-linux = ["rppal"]
+
 [profile.dev]
-# Rust debug is too slow.
-# For debug builds always builds with some optimization
-opt-level = "s"
+opt-level = 0
+debug = true
+overflow-checks = true
 
 [profile.release]
-codegen-units = 1        # LLVM can perform better optimizations using a single thread
-debug = 2
+opt-level = 3
+debug = false
 debug-assertions = false
 incremental = false
-lto = 'fat'
-opt-level = 's'
+lto = "fat"
 overflow-checks = false
+codegen-units = 1 

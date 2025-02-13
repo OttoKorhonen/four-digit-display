@@ -1,69 +1,76 @@
-use crate::tm1637::{
-    Address, AddressMode, CommandByte, DataCommand, DisplayMode, DisplaySwitch, PulseWidth,
-    Tm1637Error,
+use crate::tm1637::{AddressMode, CommandByte, DataCommand, DisplaySwitch};
+use embedded_hal::{
+    delay::DelayNs,
+    digital::{OutputPin, StatefulOutputPin},
 };
-use esp_hal::delay::Delay;
-use esp_hal::gpio::OutputOpenDrain;
 use heapless::Vec;
 
-pub struct Tm1637<'a> {
-    dio: OutputOpenDrain<'a>,
-    scl: OutputOpenDrain<'a>,
-    delay: Delay,
+pub struct Tm1637<'a, E, D>
+where
+    E: embedded_hal::digital::Error,
+    D: DelayNs,
+{
+    dio: &'a mut dyn StatefulOutputPin<Error = E>,
+    scl: &'a mut dyn OutputPin<Error = E>,
+    delay: D,
 }
 
-impl<'a> Tm1637<'a> {
-    pub fn new(sda: OutputOpenDrain<'a>, scl: OutputOpenDrain<'a>) -> Self {
-        Self {
-            dio: sda,
-            scl,
-            delay: Delay::new(),
-        }
+impl<'a, E, D> Tm1637<'a, E, D>
+where
+    E: embedded_hal::digital::Error,
+    D: DelayNs,
+{
+    pub fn new(
+        dio: &'a mut dyn StatefulOutputPin<Error = E>,
+        scl: &'a mut dyn OutputPin<Error = E>,
+        delay: D,
+    ) -> Self {
+        Self { dio, scl, delay }
     }
 
     fn start_input(&mut self) {
-        self.dio.set_high();
-        self.scl.set_high();
-        self.delay.delay_micros(5);
+        self.dio.set_high().unwrap();
+        self.scl.set_high().unwrap();
+        self.delay.delay_ms(5);
 
-        self.dio.set_low();
-        self.delay.delay_micros(5);
-        self.scl.set_low();
+        self.dio.set_low().unwrap();
+        self.delay.delay_ms(5);
+        self.scl.set_low().unwrap();
     }
 
     fn end_input(&mut self) {
-        self.scl.set_low();
-        self.dio.set_low();
-        self.delay.delay_micros(5);
+        self.scl.set_low().unwrap();
+        self.dio.set_low().unwrap();
+        self.delay.delay_ms(5);
 
-        self.scl.set_high();
-        self.delay.delay_micros(5);
-        self.dio.set_high();
+        self.scl.set_high().unwrap();
+        self.delay.delay_ms(5);
+        self.dio.set_high().unwrap();
     }
 
     fn write_byte(&mut self, byte: u8) -> bool {
         for i in 0..8 {
             // Asetetaan DIO bittiarvon mukaan
             if (byte >> i) & 1 == 1 {
-                self.dio.set_high();
+                self.dio.set_high().unwrap();
             } else {
-                self.dio.set_low();
+                self.dio.set_low().unwrap();
             }
 
             // Kello-pulssi
-            self.scl.set_high();
-            self.delay.delay_micros(5);
-            self.scl.set_low();
-            self.delay.delay_micros(5);
+            self.scl.set_high().unwrap();
+            self.delay.delay_ms(5);
+            self.scl.set_low().unwrap();
+            self.delay.delay_ms(5);
         }
 
-        self.scl.set_high();
-        self.delay.delay_micros(5);
+        self.scl.set_high().unwrap();
+        self.delay.delay_ms(5);
 
-        let ack = self.dio.is_low(); // TM1637 vetää linjan alas, jos ACK annetaan
+        let ack = self.dio.is_set_low().unwrap(); // TM1637 vetää linjan alas, jos ACK annetaan
 
-        self.scl.set_low();
-        self.delay.delay_micros(5);
+        self.scl.set_low().unwrap();
+        self.delay.delay_ms(5);
 
         ack
     }
@@ -106,11 +113,11 @@ impl<'a> Tm1637<'a> {
 
     pub fn init(&mut self) {
         self.write_command_to_register(DisplaySwitch::On);
-        self.delay.delay_micros(5);
+        self.delay.delay_ms(5);
         self.write_command_to_register(AddressMode::Automatic);
-        self.delay.delay_micros(5);
+        self.delay.delay_ms(5);
         self.write_command_to_register(DataCommand::WriteDataToDisplayRegister);
-        self.delay.delay_micros(5);
+        self.delay.delay_ms(5);
     }
 
     /// write to the display. Max 4 digits
