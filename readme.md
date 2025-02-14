@@ -9,28 +9,23 @@ Link to the datasheet:
 ### Issues
 Program may need to be restarted a couple of times so that the numbers are set in the right places. This error may be caused by fault in register setting, this will be fixed later.
 
-## How to run/build
+## Build instructions
 
-<b>To run:</b>
+### ESP32-based boards
+- cargo build --release --features esp32
+- cargo build --release --features esp32s2
+- cargo build --release --features esp32s3
+- cargo build --release --features esp32c3
 
-> cargo run
+### Raspberry Pi
+- cargo build --release --features rp-pico  
+- cargo build --release --features rpi 
 
-<b>Build:</b>
+## Supported platforms
 
-ESP32:
-> cargo build --release --features esp32
-
-ESP32S2:
->cargo build --release --features esp32s2
-
-ESP32S3:
-> cargo build --release --features esp32s3
-
-ESP32C3:
-> cargo build --release --features esp32c3
-
-Raspberry Pi Pico:
-> cargo build --release --features rp-pico
-
-Raspberry Pi 4/5 Linux:
-> cargo build --release --features rpi
+| Platform           | Status      |  
+|--------------------|------------|  
+| ESP32C3           | ✅ Tested  |  
+| ESP32 / ESP32S2 / ESP32S3 | ⚠ Not tested |  
+| Raspberry Pi Pico | ⚠ Not tested |  
+| Raspberry Pi 4/5  | ⚠ Not tested |
