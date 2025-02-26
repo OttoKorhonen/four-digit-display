@@ -16,3 +16,6 @@ pub use display_control::{DisplaySwitch, PulseWidth};
 
 pub mod command_byte;
 pub use command_byte::CommandByte;
+
+pub mod intomessage;
+pub use intomessage::IntoMessage;

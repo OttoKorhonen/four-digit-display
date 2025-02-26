@@ -1,9 +1,9 @@
-use crate::tm1637::{AddressMode, CommandByte, DataCommand, DisplaySwitch};
+use crate::tm1637::{IntoMessage, AddressMode, CommandByte, DataCommand, DisplaySwitch};
 use embedded_hal::{
     delay::DelayNs,
     digital::{OutputPin, StatefulOutputPin},
 };
-use heapless::Vec;
+use heapless::{String, Vec};
 
 pub struct Tm1637<'a, E, D>
 where
@@ -31,20 +31,20 @@ where
     fn start_input(&mut self) {
         self.dio.set_high().unwrap();
         self.scl.set_high().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
 
         self.dio.set_low().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
         self.scl.set_low().unwrap();
     }
 
     fn end_input(&mut self) {
         self.scl.set_low().unwrap();
         self.dio.set_low().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
 
         self.scl.set_high().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
         self.dio.set_high().unwrap();
     }
 
@@ -59,18 +59,18 @@ where
 
             // Kello-pulssi
             self.scl.set_high().unwrap();
-            self.delay.delay_ms(5);
+            self.delay.delay_ns(1);
             self.scl.set_low().unwrap();
-            self.delay.delay_ms(5);
+            self.delay.delay_ns(1);
         }
 
         self.scl.set_high().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
 
         let ack = self.dio.is_set_low().unwrap(); // TM1637 vetää linjan alas, jos ACK annetaan
 
         self.scl.set_low().unwrap();
-        self.delay.delay_ms(5);
+        self.delay.delay_ns(1);
 
         ack
     }
@@ -95,22 +95,6 @@ where
         self.write_byte(bit);
     }
 
-    fn digit_to_segment(&mut self, num: u8) -> u8 {
-        match num {
-            0 => 0x3F,
-            1 => 0x06,
-            2 => 0x5B,
-            3 => 0x4F,
-            4 => 0x66,
-            5 => 0x6D,
-            6 => 0x7D,
-            7 => 0x07,
-            8 => 0x7F,
-            9 => 0x6F,
-            _ => 0x00,
-        }
-    }
-
     pub fn init(&mut self) {
         self.write_command_to_register(DisplaySwitch::On);
         self.delay.delay_ms(5);
@@ -120,20 +104,45 @@ where
         self.delay.delay_ms(5);
     }
 
+    fn char_to_segment(&self, ch: char) -> u8 {
+        match ch {
+            '0' => 0x3F,
+            '1' => 0x06,
+            '2' => 0x5B,
+            '3' => 0x4F,
+            '4' => 0x66,
+            '5' => 0x6D,
+            '6' => 0x7D,
+            '7' => 0x07,
+            '8' => 0x7F,
+            '9' => 0x6F,
+            'A' | 'a' => 0x77,
+            'B' | 'b' => 0x7C,
+            'C' | 'c' => 0x39,
+            'D' | 'd' => 0x5E,
+            'E' | 'e' => 0x79,
+            'F' | 'f' => 0x71,
+            'N' | 'n' => 0x4E,
+            'O' | 'o' => 0x4F,
+            'R' | 'r' => 0x72,
+            _ => 0x00,
+        }
+    }
+
     /// write to the display. Max 4 digits
-    pub fn write(&mut self, message: u16) {
-        let digits = [
-            (message / 1000) % 10,
-            (message / 100) % 10,
-            (message / 10) % 10,
-            message % 10,
-        ];
+    pub fn write<T>(&mut self, message: T)
+    where
+        T: IntoMessage,
+    {
+        let mut buffer = String::<4>::new();
+        message.write_to(&mut buffer);
 
-        let mut bit_vec: Vec<u8, 4> = Vec::new();
+        // let mut bit_vec: Vec<u8, 4> = Vec::new();
+        let mut bit_vec: [u8; 4] = [0x00; 4];
+        let chars: Vec<char, 4> = buffer.chars().collect();
 
-        for &digit in &digits {
-            let bit = self.digit_to_segment(digit as u8);
-            bit_vec.push(bit).unwrap();
+        for (i, &ch) in chars.iter().take(4).enumerate() {
+            bit_vec[i] = self.char_to_segment(ch);
         }
 
         self.write_value_to_register(&bit_vec);

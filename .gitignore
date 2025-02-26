@@ -90,3 +90,4 @@ rust-project.json
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,rust-analyzer,visualstudiocode,linux,git
 
+main.rs
