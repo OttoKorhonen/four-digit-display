@@ -6,8 +6,6 @@ This is driver for TM1637 chip written in Rust programming language. This driver
 Link to the datasheet:
 > https://www.makerguides.com/wp-content/uploads/2019/08/TM1637-Datasheet.pdf
 
-### Issues
-Program may need to be restarted a couple of times so that the numbers are set in the right places. This error may be caused by fault in register setting, this will be fixed later.
 
 ## Build instructions
 
