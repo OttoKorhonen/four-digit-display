@@ -30,7 +30,6 @@ esp32 = [
     "esp-backtrace/esp32",
     "esp-backtrace/exception-handler",
     "esp-backtrace/panic-handler",
-    "esp-backtrace/println"
 ]
 esp32s2 = [
     "esp-hal/esp32s2",
@@ -38,7 +37,6 @@ esp32s2 = [
     "esp-backtrace/esp32s2",
     "esp-backtrace/exception-handler",
     "esp-backtrace/panic-handler",
-    "esp-backtrace/println"
 ]
 esp32s3 = [
     "esp-hal/esp32s3",
@@ -46,7 +44,6 @@ esp32s3 = [
     "esp-backtrace/esp32s3",
     "esp-backtrace/exception-handler",
     "esp-backtrace/panic-handler",
-    "esp-backtrace/println"
 ]
 esp32c3 = [
     "esp-hal/esp32c3",
@@ -54,7 +51,6 @@ esp32c3 = [
     "esp-backtrace/esp32c3",
     "esp-backtrace/exception-handler",
     "esp-backtrace/panic-handler",
-    "esp-backtrace/println"
 ]
 
 # Raspberry Pi Pico
