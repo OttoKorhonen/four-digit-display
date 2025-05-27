@@ -26,31 +26,15 @@ default = []
 # ESP32-tuet
 esp32 = [
     "esp-hal/esp32",
-    "esp-backtrace",
-    "esp-backtrace/esp32",
-    "esp-backtrace/exception-handler",
-    "esp-backtrace/panic-handler",
 ]
 esp32s2 = [
     "esp-hal/esp32s2",
-    "esp-backtrace",
-    "esp-backtrace/esp32s2",
-    "esp-backtrace/exception-handler",
-    "esp-backtrace/panic-handler",
 ]
 esp32s3 = [
     "esp-hal/esp32s3",
-    "esp-backtrace",
-    "esp-backtrace/esp32s3",
-    "esp-backtrace/exception-handler",
-    "esp-backtrace/panic-handler",
 ]
 esp32c3 = [
     "esp-hal/esp32c3",
-    "esp-backtrace",
-    "esp-backtrace/esp32c3",
-    "esp-backtrace/exception-handler",
-    "esp-backtrace/panic-handler",
 ]
 
 # Raspberry Pi Pico
