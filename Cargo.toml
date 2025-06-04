@@ -13,35 +13,10 @@ heapless = "0.8.0"
 log = "0.4.21"
 critical-section = "1.2.0"
 
-# Valinnaiset alustakohtaiset riippuvuudet
-esp-hal = { version = "0.23.1", optional = true }
-esp-backtrace = { version = "0.14.2", optional = true }
-rp-hal = { version = "0.0.2", optional = true }
-rppal = { version = "0.14", optional = true }
-
 [features]
 # Ei oletusalustaa – käyttäjän on valittava haluamansa
 default = []
 
-# ESP32-tuet
-esp32 = [
-    "esp-hal/esp32",
-]
-esp32s2 = [
-    "esp-hal/esp32s2",
-]
-esp32s3 = [
-    "esp-hal/esp32s3",
-]
-esp32c3 = [
-    "esp-hal/esp32c3",
-]
-
-# Raspberry Pi Pico
-rp-pico = ["rp-hal"]
-
-# Raspberry Pi 4/5 Linux GPIO
-rp-linux = ["rppal"]
 
 [profile.dev]
 opt-level = 0

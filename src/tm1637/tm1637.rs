@@ -1,28 +1,24 @@
 use crate::tm1637::{IntoMessage, AddressMode, CommandByte, DataCommand, DisplaySwitch};
 use embedded_hal::{
     delay::DelayNs,
-    digital::{OutputPin, StatefulOutputPin},
 };
 use heapless::{String, Vec};
 
-pub struct Tm1637<'a, E, D>
-where
-    E: embedded_hal::digital::Error,
-    D: DelayNs,
-{
-    dio: &'a mut dyn StatefulOutputPin<Error = E>,
-    scl: &'a mut dyn OutputPin<Error = E>,
+pub struct Tm1637<StatefulOutputPin, OutputPin, D>{
+    dio: StatefulOutputPin,
+    scl: OutputPin,
     delay: D,
 }
 
-impl<'a, E, D> Tm1637<'a, E, D>
+impl<StatefulOutputPin, OutputPin, D> Tm1637<StatefulOutputPin, OutputPin, D>
 where
-    E: embedded_hal::digital::Error,
+    StatefulOutputPin: embedded_hal::digital::StatefulOutputPin,
+    OutputPin: embedded_hal::digital::OutputPin,
     D: DelayNs,
 {
     pub fn new(
-        dio: &'a mut dyn StatefulOutputPin<Error = E>,
-        scl: &'a mut dyn OutputPin<Error = E>,
+        dio: StatefulOutputPin,
+        scl: OutputPin,
         delay: D,
     ) -> Self {
         Self { dio, scl, delay }
@@ -156,5 +152,3 @@ where
         command.to_u8()
     }
 }
-
-// impl<E: fmt::Debug> Error for Tm1637Error<E> {}
