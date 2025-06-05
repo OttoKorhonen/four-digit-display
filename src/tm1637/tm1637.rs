@@ -1,24 +1,25 @@
 use crate::tm1637::{IntoMessage, AddressMode, CommandByte, DataCommand, DisplaySwitch};
 use embedded_hal::{
     delay::DelayNs,
+    digital::{InputPin, OutputPin}
 };
 use heapless::{String, Vec};
 
-pub struct Tm1637<StatefulOutputPin, OutputPin, D>{
-    dio: StatefulOutputPin,
-    scl: OutputPin,
+pub struct Tm1637<Dio, Scl, D>{
+    dio: Dio,
+    scl: Scl,
     delay: D,
 }
 
-impl<StatefulOutputPin, OutputPin, D> Tm1637<StatefulOutputPin, OutputPin, D>
+impl<Dio, Scl, D> Tm1637<Dio, Scl, D>
 where
-    StatefulOutputPin: embedded_hal::digital::StatefulOutputPin,
-    OutputPin: embedded_hal::digital::OutputPin,
+    Dio: OutputPin + InputPin,
+    Scl: OutputPin,
     D: DelayNs,
 {
     pub fn new(
-        dio: StatefulOutputPin,
-        scl: OutputPin,
+        dio: Dio,
+        scl: Scl,
         delay: D,
     ) -> Self {
         Self { dio, scl, delay }
@@ -63,7 +64,7 @@ where
         self.scl.set_high().unwrap();
         self.delay.delay_ns(1);
 
-        let ack = self.dio.is_set_low().unwrap(); // TM1637 vetää linjan alas, jos ACK annetaan
+        let ack = self.dio.is_low().unwrap_or(false);// TM1637 vetää linjan alas, jos ACK annetaan
 
         self.scl.set_low().unwrap();
         self.delay.delay_ns(1);
