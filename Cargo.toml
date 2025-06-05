@@ -10,24 +10,3 @@ path = "src/lib.rs"
 [dependencies]
 embedded-hal = "1.0.0"
 heapless = "0.8.0"
-log = "0.4.21"
-critical-section = "1.2.0"
-
-[features]
-# Ei oletusalustaa – käyttäjän on valittava haluamansa
-default = []
-
-
-[profile.dev]
-opt-level = 0
-debug = true
-overflow-checks = true
-
-[profile.release]
-opt-level = 3
-debug = false
-debug-assertions = false
-incremental = false
-lto = "fat"
-overflow-checks = false
-codegen-units = 1
