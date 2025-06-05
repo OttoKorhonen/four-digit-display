@@ -1,11 +1,11 @@
-use crate::tm1637::{IntoMessage, AddressMode, CommandByte, DataCommand, DisplaySwitch};
+use crate::tm1637::{AddressMode, CommandByte, DisplaySwitch, IntoMessage};
 use embedded_hal::{
     delay::DelayNs,
-    digital::{InputPin, OutputPin}
+    digital::{InputPin, OutputPin},
 };
 use heapless::{String, Vec};
 
-pub struct Tm1637<Dio, Scl, D>{
+pub struct Tm1637<Dio, Scl, D> {
     dio: Dio,
     scl: Scl,
     delay: D,
@@ -17,31 +17,27 @@ where
     Scl: OutputPin,
     D: DelayNs,
 {
-    pub fn new(
-        dio: Dio,
-        scl: Scl,
-        delay: D,
-    ) -> Self {
+    pub fn new(dio: Dio, scl: Scl, delay: D) -> Self {
         Self { dio, scl, delay }
     }
 
     fn start_input(&mut self) {
         self.dio.set_high().unwrap();
         self.scl.set_high().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
 
         self.dio.set_low().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
         self.scl.set_low().unwrap();
     }
 
     fn end_input(&mut self) {
         self.scl.set_low().unwrap();
         self.dio.set_low().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
 
         self.scl.set_high().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
         self.dio.set_high().unwrap();
     }
 
@@ -56,18 +52,18 @@ where
 
             // Kello-pulssi
             self.scl.set_high().unwrap();
-            self.delay.delay_ns(1);
+            self.delay.delay_ns(2);
             self.scl.set_low().unwrap();
-            self.delay.delay_ns(1);
+            self.delay.delay_ns(2);
         }
 
         self.scl.set_high().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
 
-        let ack = self.dio.is_low().unwrap_or(false);// TM1637 vetää linjan alas, jos ACK annetaan
+        let ack = self.dio.is_low().unwrap_or(false); // TM1637 vetää linjan alas, jos ACK annetaan
 
         self.scl.set_low().unwrap();
-        self.delay.delay_ns(1);
+        self.delay.delay_ns(2);
 
         ack
     }
@@ -80,7 +76,7 @@ where
         }
 
         self.write_command_to_register(DisplaySwitch::Off);
-
+        self.write_byte(0xC0);
         self.end_input();
     }
 
@@ -92,13 +88,25 @@ where
         self.write_byte(bit);
     }
 
+    fn set_brightness(&mut self, brightness: u8) {
+        let brightness = brightness.min(7); // Maksimi kirkkaus on 7
+        let command = 0x88 | brightness; // Display control command
+
+        self.start_input();
+        self.write_byte(command);
+        self.end_input();
+    }
+
     pub fn init(&mut self) {
-        self.write_command_to_register(DisplaySwitch::On);
-        self.delay.delay_ms(5);
-        self.write_command_to_register(AddressMode::Automatic);
-        self.delay.delay_ms(5);
-        self.write_command_to_register(DataCommand::WriteDataToDisplayRegister);
-        self.delay.delay_ms(5);
+        self.delay.delay_ms(10);
+        
+        self.start_input();
+        self.write_byte(AddressMode::Automatic as u8);
+        self.end_input();
+        self.delay.delay_ms(1);
+        
+        self.set_brightness(3);
+        self.delay.delay_ms(1);
     }
 
     fn char_to_segment(&self, ch: char) -> u8 {
