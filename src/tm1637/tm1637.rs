@@ -22,23 +22,23 @@ where
     }
 
     fn start_input(&mut self) {
-        self.dio.set_high().unwrap();
-        self.scl.set_high().unwrap();
+        let _ = self.dio.set_high().unwrap();
+        let _ = self.scl.set_high().unwrap();
         self.delay.delay_ns(2);
 
-        self.dio.set_low().unwrap();
+        let _ = self.dio.set_low().unwrap();
         self.delay.delay_ns(2);
-        self.scl.set_low().unwrap();
+        let _ = self.scl.set_low().unwrap();
     }
 
     fn end_input(&mut self) {
-        self.scl.set_low().unwrap();
-        self.dio.set_low().unwrap();
+        let _ = self.scl.set_low().unwrap();
+        let _ = self.dio.set_low().unwrap();
         self.delay.delay_ns(2);
 
-        self.scl.set_high().unwrap();
+        let _ = self.scl.set_high().unwrap();
         self.delay.delay_ns(2);
-        self.dio.set_high().unwrap();
+        let _ = self.dio.set_high().unwrap();
     }
 
     fn write_byte(&mut self, byte: u8) -> bool {
@@ -50,20 +50,39 @@ where
                 self.dio.set_low().unwrap();
             }
 
+            self.delay.delay_us(2);
+            let _ = self.scl.set_high();
+            self.delay.delay_us(2);
+
             // Kello-pulssi
-            self.scl.set_high().unwrap();
-            self.delay.delay_ns(2);
-            self.scl.set_low().unwrap();
-            self.delay.delay_ns(2);
+            // self.scl.set_high().unwrap();
+            // self.delay.delay_ns(2);
+            // self.scl.set_low().unwrap();
+            // self.delay.delay_ns(2);
         }
 
-        self.scl.set_high().unwrap();
-        self.delay.delay_ns(2);
+        let _ = self.scl.set_low();
+        self.delay.delay_us(2);
+        
+        let _ = self.scl.set_high();
+        self.delay.delay_us(2);
+        
+        // Lue ACK (TM1637 vetää linjan alas ACK:ssa)
+        let ack = self.dio.is_low().unwrap_or(false);
+        
+        let _ = self.scl.set_low();
+        self.delay.delay_us(2);
+        
+        // Vaihda DIO takaisin output-tilaan
+        let _ = self.dio.set_low();
 
-        let ack = self.dio.is_low().unwrap_or(false); // TM1637 vetää linjan alas, jos ACK annetaan
+        // self.scl.set_high().unwrap();
+        // self.delay.delay_ns(2);
 
-        self.scl.set_low().unwrap();
-        self.delay.delay_ns(2);
+        // let ack = self.dio.is_low().unwrap_or(false);
+
+        // self.scl.set_low().unwrap();
+        // self.delay.delay_ns(2);
 
         ack
     }
