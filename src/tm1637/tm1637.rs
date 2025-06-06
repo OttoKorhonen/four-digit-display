@@ -50,8 +50,9 @@ where
                 self.dio.set_low().unwrap();
             }
 
-            self.delay.delay_us(2);
             let _ = self.scl.set_high();
+            self.delay.delay_us(2);
+            let _ = self.scl.set_low();
             self.delay.delay_us(2);
 
             // Kello-pulssi
@@ -63,16 +64,16 @@ where
 
         let _ = self.scl.set_low();
         self.delay.delay_us(2);
-        
+
         let _ = self.scl.set_high();
         self.delay.delay_us(2);
-        
+
         // Lue ACK (TM1637 vetää linjan alas ACK:ssa)
         let ack = self.dio.is_low().unwrap_or(false);
-        
+
         let _ = self.scl.set_low();
         self.delay.delay_us(2);
-        
+
         // Vaihda DIO takaisin output-tilaan
         let _ = self.dio.set_low();
 
@@ -132,15 +133,16 @@ where
         self.write_byte(command);
         self.end_input();
     }
-
     pub fn init(&mut self) {
         self.delay.delay_ms(10);
 
+        // Aseta automaattinen osoitteenanto
         self.start_input();
-        self.write_byte(AddressMode::Automatic as u8);
+        self.write_byte(AddressMode::Automatic.to_u8()); // Korjattu!
         self.end_input();
         self.delay.delay_ms(1);
 
+        // Aseta kirkkaus ja käynnistä näyttö
         self.set_brightness(3);
         self.delay.delay_ms(1);
     }
