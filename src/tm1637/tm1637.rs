@@ -139,6 +139,8 @@ where
         // Aseta automaattinen osoitteenanto
         self.start_input();
         self.write_byte(AddressMode::Automatic.to_u8()); // Korjattu!
+        self.delay.delay_ms(2);
+        self.write_byte(DisplaySwitch::On.to_u8());
         self.end_input();
         self.delay.delay_ms(1);
 
