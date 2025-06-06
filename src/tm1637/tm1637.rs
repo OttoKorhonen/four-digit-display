@@ -1,4 +1,4 @@
-use crate::tm1637::{AddressMode, CommandByte, DisplaySwitch, IntoMessage};
+use crate::tm1637::{AddressMode, CommandByte, DataCommand, DisplaySwitch, IntoMessage};
 use embedded_hal::{
     delay::DelayNs,
     digital::{InputPin, OutputPin},
@@ -68,25 +68,42 @@ where
         ack
     }
 
-    fn write_value_to_register(&mut self, bit_vec: &[u8]) {
+    fn write_data_to_display(&mut self, data: &[u8]) {
+        // 1. Lähetä data command
         self.start_input();
+        self.write_byte(DataCommand::WriteDataToDisplayRegister.to_u8());
+        self.end_input();
 
-        for bit in bit_vec {
-            self.write_byte(*bit);
+        // 2. Lähetä osoite ja data
+        self.start_input();
+        self.write_byte(0xC0); // Aloitusosoite (0xC0 = register 0)
+
+        for &byte in data.iter().take(4) {
+            self.write_byte(byte);
         }
 
-        self.write_command_to_register(DisplaySwitch::Off);
-        self.write_byte(0xC0);
         self.end_input();
     }
 
-    fn write_command_to_register<T>(&mut self, value: T)
-    where
-        T: CommandByte,
-    {
-        let bit = self.command_to_u8(value);
-        self.write_byte(bit);
-    }
+    // fn write_value_to_register(&mut self, bit_vec: &[u8]) {
+    //     self.start_input();
+
+    //     for bit in bit_vec {
+    //         self.write_byte(*bit);
+    //     }
+
+    //     self.write_command_to_register(DisplaySwitch::Off);
+    //     self.write_byte(0xC0);
+    //     self.end_input();
+    // }
+
+    // fn write_command_to_register<T>(&mut self, value: T)
+    // where
+    //     T: CommandByte,
+    // {
+    //     let bit = self.command_to_u8(value);
+    //     self.write_byte(bit);
+    // }
 
     fn set_brightness(&mut self, brightness: u8) {
         let brightness = brightness.min(7); // Maksimi kirkkaus on 7
@@ -99,17 +116,17 @@ where
 
     pub fn init(&mut self) {
         self.delay.delay_ms(10);
-        
+
         self.start_input();
         self.write_byte(AddressMode::Automatic as u8);
         self.end_input();
         self.delay.delay_ms(1);
-        
+
         self.set_brightness(3);
         self.delay.delay_ms(1);
     }
 
-fn char_to_segment(&self, ch: char) -> u8 {
+    fn char_to_segment(&self, ch: char) -> u8 {
         match ch {
             '0' => 0x3F,
             '1' => 0x06,
@@ -147,7 +164,6 @@ fn char_to_segment(&self, ch: char) -> u8 {
         }
     }
 
-    /// write to the display. Max 4 digits
     pub fn write<T>(&mut self, message: T)
     where
         T: IntoMessage,
@@ -155,16 +171,37 @@ fn char_to_segment(&self, ch: char) -> u8 {
         let mut buffer = String::<4>::new();
         message.write_to(&mut buffer);
 
-        let mut bit_vec: [u8; 4] = [0x00; 4];
+        let mut segments: [u8; 4] = [0x00; 4];
         let chars: Vec<char, 4> = buffer.chars().collect();
 
+        // Muunna merkit segmenttidataksi
         for (i, &ch) in chars.iter().take(4).enumerate() {
-            bit_vec[i] = self.char_to_segment(ch);
+            segments[i] = self.char_to_segment(ch);
         }
 
-        self.write_value_to_register(&bit_vec);
-        // self.write_command_to_register(DisplaySwitch::Off);
+        // Lähetä data näytölle
+        self.write_data_to_display(&segments);
     }
+
+    /// write to the display. Max 4 digits
+    // pub fn write<T>(&mut self, message: T)
+    // where
+    //     T: IntoMessage,
+    // {
+    //     let mut buffer = String::<4>::new();
+    //     message.write_to(&mut buffer);
+
+    //     let mut bit_vec: [u8; 4] = [0x00; 4];
+    //     let chars: Vec<char, 4> = buffer.chars().collect();
+
+    //     for (i, &ch) in chars.iter().take(4).enumerate() {
+    //         bit_vec[i] = self.char_to_segment(ch);
+    //     }
+
+    //     self.write_data_to_display(data);
+    //     // self.write_value_to_register(&bit_vec);
+    //     // self.write_command_to_register(DisplaySwitch::Off);
+    // }
 
     fn command_to_u8<T>(&mut self, command: T) -> u8
     where
