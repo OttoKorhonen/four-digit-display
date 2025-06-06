@@ -109,7 +109,7 @@ where
         self.delay.delay_ms(1);
     }
 
-    fn char_to_segment(&self, ch: char) -> u8 {
+fn char_to_segment(&self, ch: char) -> u8 {
         match ch {
             '0' => 0x3F,
             '1' => 0x06,
@@ -127,9 +127,22 @@ where
             'D' | 'd' => 0x5E,
             'E' | 'e' => 0x79,
             'F' | 'f' => 0x71,
-            'N' | 'n' => 0x4E,
-            'O' | 'o' => 0x4F,
-            'R' | 'r' => 0x72,
+            'G' | 'g' => 0x3D,
+            'H' | 'h' => 0x76,
+            'I' | 'i' => 0x06,
+            'J' | 'j' => 0x1E,
+            'L' | 'l' => 0x38,
+            'N' | 'n' => 0x54,
+            'O' | 'o' => 0x5C,
+            'P' | 'p' => 0x73,
+            'R' | 'r' => 0x50,
+            'S' | 's' => 0x6D,
+            'T' | 't' => 0x78,
+            'U' | 'u' => 0x1C,
+            'Y' | 'y' => 0x6E,
+            '-' => 0x40,
+            '_' => 0x08,
+            ' ' => 0x00,
             _ => 0x00,
         }
     }
@@ -142,7 +155,6 @@ where
         let mut buffer = String::<4>::new();
         message.write_to(&mut buffer);
 
-        // let mut bit_vec: Vec<u8, 4> = Vec::new();
         let mut bit_vec: [u8; 4] = [0x00; 4];
         let chars: Vec<char, 4> = buffer.chars().collect();
 
@@ -151,7 +163,7 @@ where
         }
 
         self.write_value_to_register(&bit_vec);
-        self.write_command_to_register(DisplaySwitch::Off);
+        // self.write_command_to_register(DisplaySwitch::Off);
     }
 
     fn command_to_u8<T>(&mut self, command: T) -> u8
